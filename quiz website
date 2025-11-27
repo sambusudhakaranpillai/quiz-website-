@@ -1,0 +1,303 @@
+index.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Website</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="quiz-container" class="box">
+        <h1>Simple Quiz</h1>
+
+        <div id="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+
+        <div id="timer">Time: <span id="time">15</span>s</div>
+
+        <h2 id="question"></h2>
+
+        <div id="options"></div>
+
+        <button id="nextBtn" class="hidden">Next</button>
+    </div>
+
+    <div id="result" class="box hidden">
+        <h1>Quiz Completed!</h1>
+        <p id="score"></p>
+        <button id="restartBtn">Restart Quiz</button>
+    </div>
+
+<script src="script.js"></script>
+</body>
+</html>
+
+style.css
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f3f3f3;
+    padding: 20px;
+}
+
+.box {
+    background: #fff;
+    width: 400px;
+    margin: auto;
+    padding: 20px;
+    box-shadow: 0 0 10px #ccc;
+    text-align: center;
+    border-radius: 8px;
+}
+
+#options button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: none;
+    background: #3498db;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#options button:hover {
+    background: #217dbb;
+}
+
+.correct {
+    background: #2ecc71 !important;
+}
+
+.wrong {
+    background: #e74c3c !important;
+}
+
+#nextBtn, #restartBtn {
+    margin-top: 15px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background: #9b59b6;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#nextBtn:hover, #restartBtn:hover {
+    background: #8e44ad;
+}
+
+#timer {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Progress Bar */
+#progress-container {
+    width: 100%;
+    background: #ddd;
+    height: 10px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+#progress-bar {
+    height: 10px;
+    width: 0;
+    background: #27ae60;
+    border-radius: 5px;
+}
+
+
+script.js
+
+// -------------------------------
+// QUESTIONS
+// -------------------------------
+let questions = [
+    {
+        question: "Which planet is known as the Red Planet?",
+        options: ["Earth", "Mars", "Jupiter", "Venus"],
+        answer: 1
+    },
+    {
+        question: "What is 5 + 7?",
+        options: ["10", "12", "13", "14"],
+        answer: 1
+    },
+    {
+        question: "Which is the largest ocean?",
+        options: ["Atlantic", "Pacific", "Indian", "Arctic"],
+        answer: 1
+    }
+];
+
+// Shuffle questions
+questions = questions.sort(() => Math.random() - 0.5);
+
+
+// -------------------------------
+// VARIABLES
+// -------------------------------
+let currentQuestion = 0;
+let score = 0;
+let timeLeft = 15;
+let timerInterval;
+
+
+// -------------------------------
+// ELEMENTS
+// -------------------------------
+const questionEl = document.getElementById("question");
+const optionsEl = document.getElementById("options");
+const nextBtn = document.getElementById("nextBtn");
+const resultScreen = document.getElementById("result");
+const quizContainer = document.getElementById("quiz-container");
+const scoreEl = document.getElementById("score");
+const timeEl = document.getElementById("time");
+const progressBar = document.getElementById("progress-bar");
+const restartBtn = document.getElementById("restartBtn");
+
+
+// -------------------------------
+// LOAD QUESTION
+// -------------------------------
+function loadQuestion() {
+    resetState();
+
+    let q = questions[currentQuestion];
+    questionEl.textContent = q.question;
+
+    q.options.forEach((option, index) => {
+        let btn = document.createElement("button");
+        btn.textContent = option;
+        btn.onclick = () => selectOption(index);
+        optionsEl.appendChild(btn);
+    });
+
+    startTimer();
+    updateProgress();
+}
+
+
+// -------------------------------
+// TIMER
+// -------------------------------
+function startTimer() {
+    timeLeft = 15;
+    timeEl.textContent = timeLeft;
+
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        timeEl.textContent = timeLeft;
+
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            lockOptions();
+            nextBtn.classList.remove("hidden");
+        }
+    }, 1000);
+}
+
+
+// -------------------------------
+// SELECT OPTION
+// -------------------------------
+function selectOption(index) {
+    clearInterval(timerInterval);
+
+    let q = questions[currentQuestion];
+    let allButtons = optionsEl.querySelectorAll("button");
+
+    allButtons.forEach((btn, i) => {
+        if (i === q.answer) btn.classList.add("correct");
+        else if (i === index) btn.classList.add("wrong");
+
+        btn.disabled = true;
+    });
+
+    if (index === q.answer) score++;
+
+    nextBtn.classList.remove("hidden");
+}
+
+
+// -------------------------------
+// DISABLE OPTIONS
+// -------------------------------
+function lockOptions() {
+    let allButtons = optionsEl.querySelectorAll("button");
+    allButtons.forEach(btn => btn.disabled = true);
+}
+
+
+// -------------------------------
+// RESET STATE
+// -------------------------------
+function resetState() {
+    optionsEl.innerHTML = "";
+    nextBtn.classList.add("hidden");
+}
+
+
+// -------------------------------
+// NEXT BUTTON
+// -------------------------------
+nextBtn.onclick = function () {
+    currentQuestion++;
+
+    if (currentQuestion < questions.length) {
+        loadQuestion();
+    } else {
+        endQuiz();
+    }
+};
+
+
+// -------------------------------
+// UPDATE PROGRESS
+// -------------------------------
+function updateProgress() {
+    let percent = ((currentQuestion) / questions.length) * 100;
+    progressBar.style.width = percent + "%";
+}
+
+
+// -------------------------------
+// END QUIZ
+// -------------------------------
+function endQuiz() {
+    quizContainer.classList.add("hidden");
+    resultScreen.classList.remove("hidden");
+    scoreEl.textContent = `${score} / ${questions.length}`;
+    progressBar.style.width = "100%";
+}
+
+
+// -------------------------------
+// RESTART
+// -------------------------------
+restartBtn.onclick = function () {
+    currentQuestion = 0;
+    score = 0;
+    questions = questions.sort(() => Math.random() - 0.5); // reshuffle
+
+    resultScreen.classList.add("hidden");
+    quizContainer.classList.remove("hidden");
+
+    loadQuestion();
+};
+
+
+// Start quiz on page load
+loadQuestion();
